@@ -1,0 +1,56 @@
+# Dependencies
+/vendor/
+/node_modules/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Logs
+/logs/
+*.log
+error.log
+access.log
+
+# Temporary files
+/tmp/
+/temp/
+/cache/
+*.tmp
+*.temp
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Uploaded files (don't commit user uploads)
+/uploads/
+
+# Composer
+composer.lock
+
+# Database
+*.sqlite
+*.sqlite3
+
+# PHP
+.phpunit.result.cache
+.php_cs.cache
+
+# Node.js (if used)
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

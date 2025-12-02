@@ -22,12 +22,25 @@ $error = '';
 $result = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // CSRF validation
-    $csrfToken = $_POST['csrf_token'] ?? '';
-    if (!CsrfToken::validate($csrfToken)) {
+    // Input validation and sanitization
+    $csrfToken = trim($_POST['csrf_token'] ?? '');
+    if (empty($csrfToken) || strlen($csrfToken) !== 64 || !preg_match('/^[a-f0-9]+$/', $csrfToken)) {
+        $error = "Invalid security token format. Please refresh the page and try again.";
+    } elseif (!CsrfToken::validate($csrfToken)) {
         $error = "Invalid security token. Please try again.";
-    } elseif (!isset($_FILES['file']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
-        $error = "Please select a file to upload";
+    } elseif (!isset($_FILES['file'])) {
+        $error = "No file was uploaded. Please select a file to upload.";
+    } elseif ($_FILES['file']['error'] !== UPLOAD_ERR_OK) {
+        $uploadErrors = [
+            UPLOAD_ERR_INI_SIZE => "File is too large (server limit exceeded)",
+            UPLOAD_ERR_FORM_SIZE => "File is too large (form limit exceeded)",
+            UPLOAD_ERR_PARTIAL => "File was only partially uploaded",
+            UPLOAD_ERR_NO_FILE => "No file was uploaded",
+            UPLOAD_ERR_NO_TMP_DIR => "Server error: temporary directory missing",
+            UPLOAD_ERR_CANT_WRITE => "Server error: cannot write file",
+            UPLOAD_ERR_EXTENSION => "File upload blocked by server extension"
+        ];
+        $error = $uploadErrors[$_FILES['file']['error']] ?? "Unknown upload error occurred";
     } else {
         try {
             $importService = new ImportService();

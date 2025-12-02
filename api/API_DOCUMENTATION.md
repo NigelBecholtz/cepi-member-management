@@ -204,31 +204,18 @@ Content-Type: application/json
 
 ## Examples
 
-### cURL GET Request
-
-```bash
-curl "https://mmcepi.optimasit.com/api/check-member.php?email=user@example.com"
-```
-
-### cURL POST Request
-
-```bash
-curl -X POST https://mmcepi.optimasit.com/api/check-member.php \
-  -H "Content-Type: application/json" \
-  -d '{"email": "user@example.com"}'
-```
-
-### JavaScript Fetch Example
+### JavaScript (Browser - Fetch API)
 
 ```javascript
-fetch('https://mmcepi.optimasit.com/api/check-member.php', {
-  method: 'POST',
+const apiKey = 'YOUR_API_KEY_HERE';
+const email = 'user@example.com';
+
+fetch(`https://mmcepi.optimasit.com/api/check-member.php?email=${encodeURIComponent(email)}`, {
+  method: 'GET',
   headers: {
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({
-    email: 'user@example.com'
-  })
+    'Authorization': `Bearer ${apiKey}`,
+    'Accept': 'application/json'
+  }
 })
 .then(response => response.json())
 .then(data => {
@@ -238,8 +225,130 @@ fetch('https://mmcepi.optimasit.com/api/check-member.php', {
   } else {
     console.log('Member not found');
   }
+})
+.catch(error => {
+  console.error('API Error:', error);
 });
 ```
+
+### JavaScript (Node.js - Axios)
+
+```javascript
+const axios = require('axios');
+
+const apiKey = 'YOUR_API_KEY_HERE';
+const email = 'user@example.com';
+
+axios.get('https://mmcepi.optimasit.com/api/check-member.php', {
+  params: { email: email },
+  headers: {
+    'Authorization': `Bearer ${apiKey}`,
+    'Accept': 'application/json'
+  }
+})
+.then(response => {
+  const data = response.data;
+  if (data.found) {
+    console.log('Member found:', data.organisation_name);
+  } else {
+    console.log('Member not found');
+  }
+})
+.catch(error => {
+  console.error('API Error:', error.response?.data || error.message);
+});
+```
+
+### PHP
+
+```php
+<?php
+
+$apiKey = 'YOUR_API_KEY_HERE';
+$email = 'user@example.com';
+
+$url = 'https://mmcepi.optimasit.com/api/check-member.php?email=' . urlencode($email);
+
+$ch = curl_init($url);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+    'Authorization: Bearer ' . $apiKey,
+    'Accept: application/json'
+]);
+
+$response = curl_exec($ch);
+$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+curl_close($ch);
+
+if ($httpCode === 200) {
+    $data = json_decode($response, true);
+    if ($data['found']) {
+        echo "Member found: " . $data['organisation_name'] . "\n";
+        echo "MMCEPI status: " . ($data['mm_cepi'] ? 'Yes' : 'No') . "\n";
+    } else {
+        echo "Member not found\n";
+    }
+} else {
+    echo "API Error: HTTP $httpCode\n";
+    $error = json_decode($response, true);
+    echo "Message: " . ($error['error'] ?? 'Unknown error') . "\n";
+}
+?>
+```
+
+### Python
+
+```python
+import requests
+
+api_key = 'YOUR_API_KEY_HERE'
+email = 'user@example.com'
+
+url = 'https://mmcepi.optimasit.com/api/check-member.php'
+headers = {
+    'Authorization': f'Bearer {api_key}',
+    'Accept': 'application/json'
+}
+params = {'email': email}
+
+try:
+    response = requests.get(url, params=params, headers=headers)
+    response.raise_for_status()
+    
+    data = response.json()
+    if data['found']:
+        print(f"Member found: {data['organisation_name']}")
+        print(f"MMCEPI status: {'Yes' if data['mm_cepi'] else 'No'}")
+    else:
+        print("Member not found")
+        
+except requests.exceptions.HTTPError as e:
+    print(f"API Error: {e}")
+    if e.response:
+        error_data = e.response.json()
+        print(f"Message: {error_data.get('error', 'Unknown error')}")
+```
+
+### cURL (Command Line)
+
+```bash
+# GET request with API key in Authorization header (recommended)
+curl -H "Authorization: Bearer YOUR_API_KEY_HERE" \
+     -H "User-Agent: Mozilla/5.0" \
+     "https://mmcepi.optimasit.com/api/check-member.php?email=user@example.com"
+
+# GET request with API key in query parameter
+curl "https://mmcepi.optimasit.com/api/check-member.php?email=user@example.com&api_key=YOUR_API_KEY_HERE"
+
+# POST request with JSON body
+curl -X POST \
+     -H "Content-Type: application/json" \
+     -H "Authorization: Bearer YOUR_API_KEY_HERE" \
+     -d '{"email": "user@example.com"}' \
+     "https://mmcepi.optimasit.com/api/check-member.php"
+```
+
+**Note:** When using cURL, you may need to add a User-Agent header if your site is behind Cloudflare, as Cloudflare may block requests without proper browser headers.
 
 ## Technical Details
 

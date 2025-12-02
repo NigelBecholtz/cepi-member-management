@@ -29,28 +29,67 @@ $message = '';
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // CSRF validation
-    $csrfToken = $_POST['csrf_token'] ?? '';
-    if (!CsrfToken::validate($csrfToken)) {
+    // Input sanitization and validation
+    $csrfToken = trim($_POST['csrf_token'] ?? '');
+    if (empty($csrfToken) || strlen($csrfToken) !== 64 || !preg_match('/^[a-f0-9]+$/', $csrfToken)) {
+        $error = "Invalid security token format. Please refresh the page and try again.";
+    } elseif (!CsrfToken::validate($csrfToken)) {
         $error = "Invalid security token. Please try again.";
     } else {
-        $action = $_POST['action'] ?? 'existing';
-        $organisationId = (int)($_POST['organisation_id'] ?? 0);
+        $action = trim($_POST['action'] ?? '');
+        $organisationIdRaw = $_POST['organisation_id'] ?? '';
         $newOrganisationName = trim($_POST['new_organisation_name'] ?? '');
         $username = trim($_POST['username'] ?? '');
         $password = $_POST['password'] ?? '';
         $email = trim($_POST['email'] ?? '');
-        
-        // Validation
-        if (empty($username) || empty($password)) {
-            $error = "Please enter username and password";
-        } elseif (strlen($password) < 6) {
-            $error = "Password must be at least 6 characters long";
-        } elseif ($action === 'existing' && $organisationId <= 0) {
-            $error = "Please select an organization";
-        } elseif ($action === 'new' && empty($newOrganisationName)) {
-            $error = "Please enter an organization name";
+
+        // Validate action parameter
+        if (!in_array($action, ['existing', 'new'], true)) {
+            $error = "Invalid action selected.";
+        } elseif ($action === 'existing') {
+            // Validate organisation_id for existing action
+            if (!is_numeric($organisationIdRaw) || ($organisationId = (int)$organisationIdRaw) <= 0) {
+                $error = "Please select a valid organization.";
+            }
+        } elseif ($action === 'new') {
+            // Validate new organisation name
+            if (empty($newOrganisationName)) {
+                $error = "Please enter an organization name.";
+            } elseif (strlen($newOrganisationName) > 255) {
+                $error = "Organization name is too long (maximum 255 characters).";
+            } elseif (!preg_match('/^[a-zA-Z0-9\s\-\.\(\)]+$/', $newOrganisationName)) {
+                $error = "Organization name contains invalid characters. Use only letters, numbers, spaces, hyphens, dots, and parentheses.";
+            }
         } else {
+            $error = "Please select whether to use an existing organization or create a new one.";
+        }
+
+        // Validate username
+        if (empty($username)) {
+            $error = "Please enter a username.";
+        } elseif (strlen($username) > 100) {
+            $error = "Username is too long (maximum 100 characters).";
+        } elseif (!preg_match('/^[a-zA-Z0-9_]+$/', $username)) {
+            $error = "Username contains invalid characters. Use only letters, numbers, and underscores.";
+        }
+
+        // Validate password
+        if (empty($password)) {
+            $error = "Please enter a password.";
+        } elseif (strlen($password) < 8) {
+            $error = "Password must be at least 8 characters long.";
+        } elseif (strlen($password) > 255) {
+            $error = "Password is too long (maximum 255 characters).";
+        }
+
+        // Validate email (optional field)
+        if (!empty($email)) {
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($email) > 255) {
+                $error = "Please enter a valid email address.";
+            }
+        }
+
+        if (empty($error)) {
             try {
                 // If new organization, create it first
                 if ($action === 'new') {

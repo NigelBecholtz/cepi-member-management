@@ -1,25 +1,30 @@
 <?php
 
-// Export functionality removed - redirect to import
 require_once __DIR__ . '/auth-check.php';
-header('Location: import.php');
-exit;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $format = $_POST['format'] ?? 'csv';
-    $includeInactive = isset($_POST['include_inactive']);
-    
-    try {
-        $exportService = new ExportService();
-        
-        if ($format === 'csv') {
-            $exportService->exportToCsv($orgId, $includeInactive);
-        } else {
-            $exportService->exportToExcel($orgId, $includeInactive);
+    // Input validation and sanitization
+    $format = trim($_POST['format'] ?? '');
+    $includeInactive = isset($_POST['include_inactive']) && $_POST['include_inactive'] === '1';
+
+    // Validate format parameter
+    if (empty($format)) {
+        $error = "Export format is required.";
+    } elseif (!in_array($format, ['csv', 'excel'], true)) {
+        $error = "Invalid export format. Please select CSV or Excel.";
+    } elseif (!is_bool($includeInactive)) {
+        $error = "Invalid inactive members option.";
+    } else {
+            $exportService = new ExportService();
+
+            if ($format === 'csv') {
+                $exportService->exportToCsv($orgId, $includeInactive);
+            } else {
+                $exportService->exportToExcel($orgId, $includeInactive);
+            }
+        } catch (Exception $e) {
+            $error = "Export failed: " . htmlspecialchars($e->getMessage());
         }
-    } catch (Exception $e) {
-        die("Export error: " . $e->getMessage());
-    }
 }
 
 ?>
@@ -140,9 +145,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <a href="export.php" class="active">Export</a>
         </nav>
         
+        <?php if (isset($error) && !empty($error)): ?>
+        <div style="background: #f8d7da; color: #721c24; padding: 15px; border-radius: 6px; margin-bottom: 20px; border-left: 4px solid #dc3545;">
+            <strong>❌ Error:</strong> <?= $error ?>
+        </div>
+        <?php else: ?>
         <div style="background: #fff3cd; padding: 15px; border-radius: 6px; margin-bottom: 20px; border-left: 4px solid #ffc107;">
             <strong>ℹ️ Info:</strong> Members will be exported for <strong><?= htmlspecialchars($orgName) ?></strong>
         </div>
+        <?php endif; ?>
         
         <form method="POST">
                 

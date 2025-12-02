@@ -78,6 +78,19 @@ class ApiKey {
     }
 
     /**
+     * Update last used timestamp for an API key
+     */
+    public function updateLastUsed($apiKeyId) {
+        $stmt = $this->db->prepare("
+            UPDATE api_keys
+            SET last_used_at = CURRENT_TIMESTAMP
+            WHERE api_key_id = :api_key_id
+        ");
+
+        return $stmt->execute([':api_key_id' => $apiKeyId]);
+    }
+
+    /**
      * Get all API keys
      */
     public function getAll() {
@@ -173,18 +186,6 @@ class ApiKey {
         return $stmt->execute([':id' => $id]);
     }
 
-    /**
-     * Update last used timestamp
-     */
-    public function updateLastUsed($id) {
-        $stmt = $this->db->prepare("
-            UPDATE api_keys
-            SET last_used_at = CURRENT_TIMESTAMP
-            WHERE api_key_id = :id
-        ");
-
-        return $stmt->execute([':id' => $id]);
-    }
 
     /**
      * Check if a key is expired

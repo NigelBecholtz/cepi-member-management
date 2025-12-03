@@ -54,9 +54,3 @@ composer.lock
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-
-# Test scripts (temporary)
-public/test_*.php
-public/simple_test.php
-public/hello.php
-migrate_database.sh

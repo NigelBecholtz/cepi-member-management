@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Key Validation Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        input, button { padding: 8px; margin: 5px; }
+        button { background: #4A70A9; color: white; border: none; cursor: pointer; }
+        button:hover { background: #8FABD4; }
+        #result { margin-top: 20px; padding: 15px; border: 1px solid #ccc; white-space: pre-wrap; border-radius: 4px; }
+        .success { background: #d4edda; border-color: #c3e6cb; color: #155724; }
+        .error { background: #f8d7da; border-color: #f5c6cb; color: #721c24; }
+        .test-buttons { margin: 10px 0; }
+        .test-buttons button { margin-right: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 API Key Validation Test</h1>
+        <p>Test if API key validation works correctly</p>
+
+        <div>
+            <label>API Key:</label><br>
+            <input type="text" id="apiKey" placeholder="Enter your API key" size="80">
+        </div>
+
+        <div>
+            <label>Email to check:</label><br>
+            <input type="email" id="email" value="test@example.com">
+        </div>
+
+        <div class="test-buttons">
+            <button onclick="testValidKey()">✅ Test Valid Key</button>
+            <button onclick="testInvalidKey()">❌ Test Invalid Key</button>
+            <button onclick="testNoKey()">🚫 Test No Key</button>
+            <button onclick="clearResult()">🧹 Clear</button>
+        </div>
+
+        <div id="result"></div>
+
+        <div style="margin-top: 20px; padding: 15px; background: #e9ecef; border-radius: 4px;">
+            <h3>📋 How to Test:</h3>
+            <ol>
+                <li>Get a valid API key from your admin panel</li>
+                <li>Click "Test Valid Key" - should return member data</li>
+                <li>Change API key to random text</li>
+                <li>Click "Test Invalid Key" - should return error</li>
+                <li>Clear API key field</li>
+                <li>Click "Test No Key" - should return error</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        const apiUrl = 'https://mmcepi.optimasit.com/api/check-member.php';
+
+        async function testAPI(apiKey, testName) {
+            const email = document.getElementById('email').value;
+            const resultDiv = document.getElementById('result');
+
+            resultDiv.textContent = `⏳ Testing ${testName}...`;
+            resultDiv.className = '';
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': apiKey ? `Bearer ${apiKey}` : ''
+                    },
+                    body: JSON.stringify({ email: email })
+                });
+
+                const text = await response.text();
+
+                try {
+                    const data = JSON.parse(text);
+                    resultDiv.className = data.error ? 'error' : 'success';
+                    resultDiv.textContent = `✅ ${testName} Result:\n${JSON.stringify(data, null, 2)}`;
+                } catch (e) {
+                    resultDiv.className = 'error';
+                    resultDiv.textContent = `⚠️ ${testName} - Non-JSON Response:\n${text}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'error';
+                resultDiv.textContent = `❌ ${testName} Error: ${error.message}`;
+            }
+        }
+
+        function testValidKey() {
+            const apiKey = document.getElementById('apiKey').value;
+            if (!apiKey) {
+                alert('Please enter a valid API key first!');
+                return;
+            }
+            testAPI(apiKey, 'Valid API Key');
+        }
+
+        function testInvalidKey() {
+            testAPI('invalid-key-12345', 'Invalid API Key');
+        }
+
+        function testNoKey() {
+            testAPI('', 'No API Key');
+        }
+
+        function clearResult() {
+            document.getElementById('result').textContent = '';
+        }
+
+        // Auto-focus API key field
+        document.getElementById('apiKey').focus();
+    </script>
+</body>
+</html>
